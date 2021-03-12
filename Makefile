@@ -1,6 +1,6 @@
 CFLAGS += -fPIC
 WARNINGS = -Wall -Wextra -Wpedantic
-
+
 PREFIX ?= /usr/local/bin
 
 SRCS = errknow.c
