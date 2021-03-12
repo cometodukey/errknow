@@ -1,14 +1,16 @@
-CFLAGS = -fPIC
-WARNINGS += -Wall -Wextra -Wpedantic
-
+CFLAGS += -fPIC
+WARNINGS = -Wall -Wextra -Wpedantic
+
 PREFIX ?= /usr/local/bin
 
 SRCS = errknow.c
 OBJS = $(SRCS:.c=.o)
 BINNAME = errknow
 
+CFLAGS += $(WARNINGS)
+
 $(BINNAME): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
 
 .PHONY: install
 install: $(BINNAME)
@@ -20,7 +22,7 @@ uninstall:
 
 .PHONY: clean
 clean:
-	rm -f $(BINNAME).o $(BINNAME)
+	rm -f $(OBJS) $(BINNAME)
 
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<

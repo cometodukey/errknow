@@ -9,17 +9,22 @@
 
 #include "errno_names.h"
 
+/* Get the length of a static array */
 #define LEN(x) ((sizeof(x)) / (sizeof(*x)))
 
-void unknown_value(const char *name)
+static void unknown_value(const char *name)
 {
-    fprintf(stderr, "errno: Unknown value: %s\n", name);
+    fprintf(stderr, "errknow: Unknown value: %s\n", name);
 }
 
-int get_value_from_name(const char *name, long *errnum)
+static int get_value_from_name(const char *name, long *errnum)
 {
     for (size_t i = 0; i < LEN(errno_names); i++)
     {
+        if (errno_names[i] == NULL)
+        {
+            continue;
+        }
         if (strcasecmp(name, errno_names[i]) == 0)
         {
             *errnum = i;
@@ -30,7 +35,7 @@ int get_value_from_name(const char *name, long *errnum)
     return -1;
 }
 
-void get_errno_info(const char *string)
+static void errknow(const char *string)
 {
     const char *name = NULL;
     const char *description = NULL;
@@ -67,6 +72,7 @@ void get_errno_info(const char *string)
 
 int main(int argc, const char **argv)
 {
+    /* Skip argv[0] */
     int count = --argc;
     const char **strings = ++argv;
 
@@ -79,7 +85,11 @@ int main(int argc, const char **argv)
 
     for (int i = 0; i < count; i++)
     {
-        get_errno_info(strings[i]);
+        /* NULL pointers exist in the errno_names array so check that we aren't passing any */
+        if (strings[i] != NULL)
+        {
+            errknow(strings[i]);
+        }
     }
     fflush(stdout);
 
