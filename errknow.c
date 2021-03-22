@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "errno_names.h"
+#include "errknow.h"
 
 #define lengthof(x) (sizeof(x) / sizeof(*(x)))
 
@@ -90,7 +90,6 @@ int main(int argc, const char **argv)
             errknow(strings[i]);
         }
     }
-    fflush(stdout);
 
     return 0;
 }

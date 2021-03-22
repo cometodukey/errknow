@@ -1,5 +1,5 @@
 CFLAGS += -fPIC -std=c99
-WARNINGS = -Wall -Wextra -Wpedantic
+WARNINGS = -Wall -Wextra -Wpedantic -Werror
 
 PREFIX ?= /usr/local/bin
 
