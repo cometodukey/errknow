@@ -1,31 +1,27 @@
-#define _GNU_SOURCE
-
 #include <errno.h>
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <strings.h>
 
 #include "errno_names.h"
 
-/* Get the length of a static array */
-#define LEN(x) ((sizeof(x)) / (sizeof(*x)))
+#define lengthof(x) (sizeof(x) / sizeof(*(x)))
 
 static void unknown_value(const char *name)
 {
     fprintf(stderr, "errknow: Unknown value: %s\n", name);
 }
 
-static int get_value_from_name(const char *name, long *errnum)
+static int get_value_from_name(const char *name, unsigned long *errnum)
 {
-    for (size_t i = 0; i < LEN(errno_names); i++)
+    for (size_t i = 0; i < lengthof(errno_names); i++)
     {
         if (errno_names[i] == NULL)
         {
             continue;
         }
-        if (strcasecmp(name, errno_names[i]) == 0)
+        if (strcmp(name, errno_names[i]) == 0)
         {
             *errnum = i;
             return 0;
@@ -40,12 +36,10 @@ static void errknow(const char *string)
     const char *name = NULL;
     const char *description = NULL;
     char *end = NULL;
-    long errnum = 0;
+    unsigned long errnum = 0;
 
-    errnum = strtol(string, &end, 10);
-    if (end != (string + strlen(string)) ||
-        errnum == LONG_MIN ||
-        errnum == LONG_MAX)
+    errnum = strtoul(string, &end, 10);
+    if (end != (string + strlen(string)) || errnum == ULONG_MAX)
     {
         name = string;
         if (get_value_from_name(name, &errnum) == -1)
@@ -56,7 +50,12 @@ static void errknow(const char *string)
     }
     else
     {
-        name = strerrorname_np(errnum);
+        if (errnum >= lengthof(errno_names))
+        {
+            unknown_value(string);
+            return;
+        }
+        name = errno_names[errnum];
     }
 
     if (name == NULL)
@@ -79,7 +78,7 @@ int main(int argc, const char **argv)
     if (count == 0)
     {
         /* Show everything */
-        count = LEN(errno_names);
+        count = lengthof(errno_names);
         strings = errno_names;
     }
 

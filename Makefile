@@ -1,4 +1,4 @@
-CFLAGS += -fPIC
+CFLAGS += -fPIC -std=c99
 WARNINGS = -Wall -Wextra -Wpedantic
 
 PREFIX ?= /usr/local/bin
