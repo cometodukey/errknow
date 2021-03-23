@@ -39,7 +39,7 @@ static void errknow(const char *string)
     unsigned long errnum = 0;
 
     errnum = strtoul(string, &end, 10);
-    if (end != (string + strlen(string)) || errnum == ULONG_MAX)
+    if (end[0] != '\0' || errnum == ULONG_MAX)
     {
         name = string;
         if (get_value_from_name(name, &errnum) == -1)
