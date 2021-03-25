@@ -34,11 +34,17 @@ static int get_value_from_name(const char *name, unsigned long *errnum)
 static void errknow(const char *string)
 {
     const char *name = NULL;
-    const char *description = NULL;
     char *end = NULL;
     unsigned long errnum = 0;
 
+    if (string == NULL)
+    {
+        return;
+    }
+
     errnum = strtoul(string, &end, 10);
+
+    /* If we couldn't parse the entire string as a number, treat it as an error name */
     if (end[0] != '\0' || errnum == ULONG_MAX)
     {
         name = string;
@@ -50,6 +56,7 @@ static void errknow(const char *string)
     }
     else
     {
+        /* The entire string could be parsed as a number, so index the table to get the name */
         if (errnum >= lengthof(errno_names))
         {
             unknown_value(string);
@@ -64,7 +71,7 @@ static void errknow(const char *string)
         return;
     }
 
-    description = strerror(errnum);
+    const char *description = strerror(errnum);
 
     printf("%d %s %s\n", (int)errnum, name, description);
 }
@@ -84,12 +91,8 @@ int main(int argc, const char **argv)
 
     for (int i = 0; i < count; i++)
     {
-        /* NULL pointers exist in the errno_names array so check that we aren't passing any */
-        if (strings[i] != NULL)
-        {
-            errknow(strings[i]);
-        }
+        errknow(strings[i]);
     }
 
-    return 0;
+    return EXIT_SUCCESS;
 }
