@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <ctype.h>
 #include <limits.h>
 #include <stdbool.h>
@@ -9,6 +10,7 @@
 
 #define lengthof(x) (sizeof(x) / sizeof(*(x)))
 
+// https://rosettacode.org/wiki/Levenshtein_distance#C.2B.2B
 static size_t levenshtein_distance(const char* s1, const char* s2,
                                    const size_t m, const size_t n)
 {
@@ -60,7 +62,7 @@ static inline size_t min(const size_t a, const size_t b)
     return a > b ? b : a;
 }
 
-static bool fuzzy_match(const char *str1, const char *str2,
+static bool is_fuzzy_match(const char *str1, const char *str2,
                         const size_t min_len, const size_t max_distance)
 {
     if (str1 == NULL || str2 == NULL)
@@ -101,7 +103,56 @@ static void strtoupper(char *dst)
     }
 }
 
-static void match_name(char **input, unsigned long *errnum, const bool fuzzy_match_strings)
+static void fuzzy_match(char *input)
+{
+    fprintf(stderr, "%s was not found.", input);
+
+    /*  Normalise to uppercase for fuzzy matching.
+        To avoid using VLA on user supplied strings, we write back to the input buffer.
+        This is safe because:
+            - The spec declares `argv` to point to writable strings
+            - When no arguments are passed, it should be impossible for this code to be reached,
+                so string literals will not be modified */
+    strtoupper(input);
+
+    /* Ensure that the buffer is large enough to hold all possible matches */
+    static const char *matched_strings[lengthof(errno_names)];
+
+    size_t count = 0;
+
+    for (size_t i = 1; i < lengthof(errno_names) - 1; i++)
+    {
+        if (is_fuzzy_match(input, errno_names[i], 4, 2) == true)
+        {
+            matched_strings[count++] = errno_names[i];
+        }
+    }
+
+    if (count != 0)
+    {
+        /* List all matches */
+        fprintf(stderr, " Did you mean; ");
+        for (size_t i = 0; i < count; i++)
+        {
+            const char *prefix = "";
+            if (i != 0)
+            {
+                prefix = ", ";
+                if (i == count - 1)
+                {
+                    prefix = " or ";
+                }
+            }
+            fprintf(stderr, "%s%s", prefix, matched_strings[i]);
+        }
+        fprintf(stderr, "?\n");
+        return;
+    }
+
+    fputc('\n', stderr);
+}
+
+static void match_name(char **input, unsigned long *errnum)
 {
     for (size_t i = 0; i < lengthof(errno_names); i++)
     {
@@ -116,61 +167,10 @@ static void match_name(char **input, unsigned long *errnum, const bool fuzzy_mat
         }
     }
 
-    /* No exact matches were found, so perfom fuzzy matching */
-    if (fuzzy_match_strings == true)
-    {
-        fprintf(stderr, "%s was not found.", *input);
-
-        /*  Normalise to uppercase for fuzzy matching.
-            To avoid using VLA on user supplied strings, we write back to the input buffer.
-            This is safe because:
-                - The spec declares `argv` to point to writable strings
-                - When no arguments are passed, it should be impossible for this code to be reached,
-                  so string literals will not be modified */
-        strtoupper(*input);
-
-        /* Ensure that the buffer is large enough to hold all possible matches */
-        static const char *matched_strings[lengthof(errno_names)];
-
-        size_t count = 0;
-
-        for (size_t i = 1; i < lengthof(errno_names) - 1; i++)
-        {
-            if (fuzzy_match(*input, errno_names[i], 4, 2) == true)
-            {
-                matched_strings[count++] = errno_names[i];
-            }
-        }
-
-        if (count != 0)
-        {
-            /* List all matches */
-            fprintf(stderr, " Did you mean; ");
-            for (size_t i = 0; i < count; i++)
-            {
-                const char *prefix = "";
-                if (i != 0)
-                {
-                    prefix = ", ";
-                    if (i == count - 1)
-                    {
-                        prefix = " or ";
-                    }
-                }
-                fprintf(stderr, "%s%s", prefix, matched_strings[i]);
-            }
-            fprintf(stderr, "?\n");
-            *input = "";
-            return;
-        }
-    }
-
-    fputc('\n', stderr);
-
     *input = "";
 }
 
-static void errknow(char *string, const bool fuzzy_match_strings)
+static int errknow(char *string)
 {
     char *name = NULL;
     char *end = NULL;
@@ -178,7 +178,7 @@ static void errknow(char *string, const bool fuzzy_match_strings)
 
     if (string == NULL)
     {
-        return;
+        return 1;
     }
 
     errnum = strtoul(string, &end, 10);
@@ -187,7 +187,7 @@ static void errknow(char *string, const bool fuzzy_match_strings)
     if (end[0] != '\0' || errnum == ULONG_MAX)
     {
         name = string;
-        match_name(&name, &errnum, fuzzy_match_strings);
+        match_name(&name, &errnum);
     }
     else
     {
@@ -195,25 +195,38 @@ static void errknow(char *string, const bool fuzzy_match_strings)
         if (errnum >= lengthof(errno_names))
         {
             fprintf(stderr, "%s is out of range.\n", string);
-            return;
+            return 1;
         }
         name = errno_names[errnum];
     }
 
     if (name[0] == '\0')
     {
-        return;
+        return 1;
     }
+
+    /* This flag marks the first match found */
+    static bool first = true;
+
+    if (first == true)
+    {
+        printf("Number | Name            | Description\n");
+        printf("-------+-----------------+--------------------------------\n");
+    }
+
+    first = false;
 
     const char *description = strerror(errnum);
 
-    printf("%d %s %s\n", (int)errnum, name, description);
+    printf("%6d | %s%*.s | %s\n", (int)errnum, name, (int)(15 - strlen(name)), "", description);
+
+    return 0;
 }
 
 int main(int argc, char **argv)
 {
     /* Skip argv[0] */
-    int count = --argc;
+    size_t count = --argc;
     char **strings = ++argv;
     bool fuzzy_match_strings = true;
 
@@ -225,9 +238,33 @@ int main(int argc, char **argv)
         fuzzy_match_strings = false;
     }
 
-    for (int i = 0; i < count; i++)
+    /* Lookup the queries */
+    for (size_t i = 0; i < count; i++)
     {
-        errknow(strings[i], fuzzy_match_strings);
+        const int ret = errknow(strings[i]);
+        if (fuzzy_match_strings == true)
+        {
+            assert(strings == argv);
+            if (ret == 0)
+            {
+                /* Mark the entry as matched */
+                strings[i][0] = '\0';
+            }
+        }
+    }
+
+    /* Fuzzy match any leftovers */
+    if (fuzzy_match_strings == true)
+    {
+        assert(count > 0);
+        for (size_t i = 0; i < count; i++)
+        {
+            if (strings[i][0] != '\0')
+            {
+                /* Fuzzy match the entry */
+                fuzzy_match(strings[i]);
+            }
+        }
     }
 
     return EXIT_SUCCESS;
