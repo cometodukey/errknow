@@ -12,7 +12,12 @@ Running `errknow` without any arguments will cause it to give information on eve
 
 ![](spelling.png)
 
+Note: `errno` value 0 has no name, which is why none is displayed.
+I think of it as `EOK` or `ESUCCESS`, but have neglected to use these to avoid confusion.
+
 ## Building
+
+Note: `-Werror` can be disabled by setting `NOWERROR=1`
 
 To build `errknow`, run `make`.
 To configure build flags, modify the `CFLAGS` and `LDFLAGS` environment variables.  

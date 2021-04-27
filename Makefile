@@ -1,7 +1,13 @@
 CFLAGS += -fPIC -std=c99
-CFLAGS += -Wall -Wextra -Wpedantic -Werror
+CFLAGS += -Wall -Wextra -Wpedantic
 
 # CFLAGS += -g -fsanitize=address,undefined -pg
+
+ifeq ($(NOWERROR), 1)
+CFLAGS +=
+else
+CFLAGS += -Werror
+endif
 
 PREFIX ?= /usr/local/bin
 
