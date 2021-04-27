@@ -1,4 +1,6 @@
-static const char *errno_names[] = {
+#include <errno.h>
+
+static char *errno_names[] = {
     [0] = "0",
 #ifdef EPERM
     [EPERM] = "EPERM",

@@ -4,9 +4,13 @@ A small utility for describing errno error codes and error names.
 
 `usage: errknow [error code|error name]`
 
-![Example usage](example.png)
+![](example.png)
 
 Running `errknow` without any arguments will cause it to give information on every error.
+
+`errknow` can detect spelling errors and provide suggestions.
+
+![](spelling.png)
 
 ## Building
 
