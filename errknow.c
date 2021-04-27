@@ -131,7 +131,7 @@ static void fuzzy_match(char *input)
     if (count != 0)
     {
         /* List all matches */
-        fprintf(stderr, " Did you mean; ");
+        fprintf(stderr, " Did you mean: ");
         for (size_t i = 0; i < count; i++)
         {
             const char *prefix = "";
@@ -140,7 +140,7 @@ static void fuzzy_match(char *input)
                 prefix = ", ";
                 if (i == count - 1)
                 {
-                    prefix = " or ";
+                    prefix = ", or ";
                 }
             }
             fprintf(stderr, "%s%s", prefix, matched_strings[i]);
