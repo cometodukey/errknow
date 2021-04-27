@@ -1,13 +1,14 @@
 CFLAGS += -fPIC -std=c99
-WARNINGS = -Wall -Wextra -Wpedantic -Werror
+CFLAGS += -Wall -Wextra -Wpedantic -Werror
+
+# CFLAGS += -g -fsanitize=address,undefined -pg
 
 PREFIX ?= /usr/local/bin
 
 SRCS = errknow.c
 OBJS = $(SRCS:.c=.o)
-BINNAME = errknow
 
-CFLAGS += $(WARNINGS)
+BINNAME = errknow
 
 $(BINNAME): $(OBJS)
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $^
