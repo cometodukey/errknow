@@ -62,6 +62,20 @@ static inline size_t min(const size_t a, const size_t b)
     return a > b ? b : a;
 }
 
+/**
+ * Check if two different strings are possible matches for each other.
+ *
+ * This works by first checking if the starts of both strings are an exact match.
+ * Doing this allows for cheaper matching of a simple typo e.g. EACCESS and EACCES.
+ *
+ * If the beginnings of the two strings do not match, we move onto computing the
+ * Levenshtein Distance of both strings.
+ * If the distance is less then, or equal to, `max_distance` then the strings are
+ * considered a match.
+ *
+ * If both the start of the strings do not match and the distance is greater than the
+ * maximum, the strings are not a match.
+ */
 static bool is_fuzzy_match(const char *str1, const char *str2,
                         const size_t min_len, const size_t max_distance)
 {
@@ -73,7 +87,7 @@ static bool is_fuzzy_match(const char *str1, const char *str2,
     const size_t str1_len = strlen(str1);
     const size_t str2_len = strlen(str2);
 
-    /* The inputs to be matched cannot be less than 4 characters */
+    /* The inputs to be matched cannot be less than `min_len` */
     if (str1_len < min_len || str2_len < min_len)
     {
         return false;
@@ -92,9 +106,13 @@ static bool is_fuzzy_match(const char *str1, const char *str2,
     return false;
 }
 
-static void strtoupper(char *dst)
+/**
+ * Convert `str` to uppercase.
+ */
+static void strtoupper(char *str)
 {
-    char *src = dst;
+    char *dst = str;
+    char *src = str;
     size_t len = strlen(src);
 
     for (size_t i = 0; i < len; i++)
@@ -103,9 +121,12 @@ static void strtoupper(char *dst)
     }
 }
 
+/**
+ * Collect all potential matches for the input string.
+ */
 static void fuzzy_match(char *input)
 {
-    fprintf(stderr, "%s was not found.", input);
+    fprintf(stderr, "errno %s was not found.", input);
 
     /*  Normalise to uppercase for fuzzy matching.
         To avoid using VLA on user supplied strings, we write back to the input buffer.
@@ -194,7 +215,6 @@ static int errknow(char *string)
         /* The entire string could be parsed as a number, so index the table to get the name */
         if (errnum >= lengthof(errno_names))
         {
-            fprintf(stderr, "%s is out of range.\n", string);
             return 1;
         }
         name = errno_names[errnum];
@@ -247,7 +267,7 @@ int main(int argc, char **argv)
             assert(strings == argv);
             if (ret == 0)
             {
-                /* Mark the entry as matched */
+                /* Mark the entry as matched by making it zero-length */
                 strings[i][0] = '\0';
             }
         }
