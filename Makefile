@@ -1,3 +1,5 @@
+.SUFFIXES:
+
 CFLAGS += -fPIC -std=c99
 CFLAGS += -Wall -Wextra -Wpedantic
 
@@ -25,11 +27,12 @@ install: $(BINNAME)
 
 .PHONY: uninstall
 uninstall:
-	rm -f $(BINNAME) $(PREFIX)/$(BINNAME)
+	rm -f $(PREFIX)/$(BINNAME)
 
 .PHONY: clean
 clean:
-	rm -f $(OBJS) $(BINNAME)
+	rm -f $(OBJS) $(BINNAME) *.out
 
+.SUFFIXES: .c .o
 .c.o:
 	$(CC) $(CFLAGS) -c -o $@ $<
